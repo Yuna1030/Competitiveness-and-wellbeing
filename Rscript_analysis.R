@@ -28,7 +28,7 @@ pacman::p_load(
   lme4, #LMM
   lmerTest, #to show p-value and 95%CI for MLL
   broomExtra
-  )
+)
 
 options(max.print=1000000)
 memory.limit(size=56000) 
@@ -54,15 +54,7 @@ table(PISA2018_data$EUDMO, useNA = "always") #composite score whose average is 0
 #competitiveness: https://www.oecd-ilibrary.org/sites/0d62bf6c-en/index.html?itemId=/content/component/0d62bf6c-en
 table(PISA2018_data$COMPETE, useNA = "always") #composite score of attitudes towards competition whose average is 0 and SD is 1 across OECD countries. Positive values mean that students are more competitive.
 PISA2018_data$COMPETE_mean <- ave(PISA2018_data$COMPETE, PISA2018_data$CNTRYID, FUN = function(x) mean(x, na.rm=T)) # Group averages over countries
-#perception of competitiveness at school: https://www.oecd-ilibrary.org/sites/0d62bf6c-en/index.html?itemId=/content/component/0d62bf6c-en
-table(PISA2018_data$PERCOMP, useNA = "always")#composite score from the first three statements of competitiveness whose average is 0 and SD is 1 across OECD countries. Positive values mean that students perceive that other students at the school compete to a greater extent.
-PISA2018_data$PERCOMP_mean <- ave(PISA2018_data$PERCOMP, PISA2018_data$CNTRYID, FUN = function(x) mean(x, na.rm=T)) # Group averages over countries
-
-PISA2018_data$COMPETE_meanSch <- ave(PISA2018_data$COMPETE, PISA2018_data$CNTSCHID, FUN = function(x) mean(x, na.rm=T)) # Group averages over schools
-PISA2018_data$PERCOMP_meanSch <- ave(PISA2018_data$PERCOMP, PISA2018_data$CNTSCHID, FUN = function(x) mean(x, na.rm=T)) # Group averages over schools
-
 PISA2018_data$COMPETE_cent <- I(PISA2018_data$COMPETE - PISA2018_data$COMPETE_mean)
-PISA2018_data$PERCOMP_cent <- I(PISA2018_data$PERCOMP - PISA2018_data$PERCOMP_mean)
 
 
 #covariates
@@ -79,19 +71,6 @@ summary(PISA2018_data$ESCS)#a composite measure that combines into a single scor
 table(PISA2018_data$IMMIG, useNA = "always")#1=native,2=second generation,3=first generation
 #sampling weights
 summary(PISA2018_data$W_FSTUWT)
-#child psychiatric symptoms 
-#In the past six months, how often have you had the following? :1=Rarely or never,2=About every month,3=About every week,4=More than once a week,5=About every day
-table(PISA2018_data$WB154Q04HA, useNA = "always")#Feeling depressed
-table(PISA2018_data$WB154Q05HA, useNA = "always")#Irritability of bad temper
-table(PISA2018_data$WB154Q06HA, useNA = "always")#Nervous
-table(PISA2018_data$WB154Q07HA, useNA = "always")#Difficulty to sleep
-table(PISA2018_data$WB154Q08HA, useNA = "always")#Dizziness
-table(PISA2018_data$WB154Q09HA, useNA = "always")#Anxiety
-psych::alpha(PISA2018_data[,c("WB154Q04HA","WB154Q05HA","WB154Q06HA","WB154Q07HA","WB154Q08HA","WB154Q09HA")], check.keys = T) #std.alpha = 0.86
-PISA2018_data$FeelNega <- rowMeans(PISA2018_data[,c("WB154Q04HA","WB154Q05HA","WB154Q06HA","WB154Q07HA","WB154Q08HA","WB154Q09HA")],na.rm = T)*6
-PISA2018_data$FeelNega[PISA2018_data$FeelNega=="NaN"] <- NA
-PISA2018_data$FeelNega <- as.numeric(PISA2018_data$FeelNega)
-table(PISA2018_data$FeelNega, useNA = "always") #missing n = 529952
 
 
 #country code
@@ -140,7 +119,6 @@ Gini_data_small <- subset(Gini_data, select = c("Countrycode","Ginicoef"))
 
 
 
-
 #1.4 merging PISA and GINI data ####
 PISA_count <- merge(PISA2018_data, Gini_data_small, by.x = "countrycode", by.y = "Countrycode", all.x = T)
 describe(PISA_count)
@@ -148,9 +126,9 @@ describe(PISA_count)
 
 
 #1.5 making sub-sample with will-be-used data ####
-ANAL_PISA2018_data <- subset(PISA_count, select = c(ST016Q01NA,EUDMO,COMPETE,PERCOMP,COMPETE_mean,PERCOMP_mean,COMPETE_cent,PERCOMP_cent,
-                                                       AGE,ST004D01T,ESCS,PA042Q01TA,MISCED,FISCED,BMMJ1,BFMJ2, #age,sex,SES,income,m_edu,f_edu,m_occu,f_occu
-                                                       IMMIG,W_FSTUWT,countrycode,regioncodeModi,Ginicoef,FeelNega))
+ANAL_PISA2018_data <- subset(PISA_count, select = c(ST016Q01NA,EUDMO,COMPETE,PERCOMP,COMPETE_mean,COMPETE_cent,
+                                                    AGE,ST004D01T,ESCS,PA042Q01TA,MISCED,FISCED,BMMJ1,BFMJ2, #age,sex,SES,income,m_edu,f_edu,m_occu,f_occu
+                                                    IMMIG,W_FSTUWT,countrycode,regioncodeModi,Ginicoef))
 
 
 
@@ -167,16 +145,16 @@ propmiss <- function(dataframe) lapply(dataframe,function(x) data.frame(nmiss=su
 propmiss(ANAL_data_PISA) 
 str(ANAL_data_PISA, list.len=ncol(ANAL_data_PISA))
 #exclude covariates missing more than 90 %
-imp_data <- ANAL_data_PISA %>% subset(select = c(ST016Q01NA,EUDMO,COMPETE,PERCOMP,COMPETE_mean,PERCOMP_mean,COMPETE_cent,PERCOMP_cent,
+imp_data <- ANAL_data_PISA %>% subset(select = c(ST016Q01NA,EUDMO,COMPETE,PERCOMP,COMPETE_mean,COMPETE_cent,
                                                  AGE,ST004D01T,ESCS,MISCED,FISCED,BMMJ1,BFMJ2,
                                                  IMMIG,W_FSTUWT,countrycode,regioncodeModi,Ginicoef))
 propmiss(imp_data)
 
 inlist <- c("COMPETE","PERCOMP","ST016Q01NA","EUDMO","ST004D01T","AGE") # we only include the outcome and exposure and key factors for prediction
-outlist <- c("COMPETE_mean","PERCOMP_mean","COMPETE_cent","PERCOMP_cent","W_FSTUWT","regioncodeModi") 
+outlist <- c("COMPETE_mean","COMPETE_cent","W_FSTUWT","regioncodeModi") 
 pred <- quickpred(imp_data, include = inlist, exclude = outlist)
 View(pred)
-rowSums(pred) # a number of predictors : 6 to 11
+rowSums(pred) # a number of predictors :10 to 11
 
 #imp <- mice(imp_data,m = 3, print = T, maxit = 5, pred = pred, seed = 30101995)
 imp <- mice(imp_data,m = 50, print = T, maxit = 25, pred = pred, seed = 30101995)
@@ -193,8 +171,8 @@ imp
 #3.1.1 sample demographics (table.1)
 table_data <- as.data.frame(imp[[1]])
 table_data$MISCEDcat <- ifelse(table_data$MISCED<3,"Low",
-                            ifelse(table_data$MISCED==3|table_data$MISCED==4,"Middle",
-                                   ifelse(table_data$MISCED==5|table_data$MISCED==6,"High",NA)))
+                               ifelse(table_data$MISCED==3|table_data$MISCED==4,"Middle",
+                                      ifelse(table_data$MISCED==5|table_data$MISCED==6,"High",NA)))
 table(table_data$MISCED,table_data$MISCEDcat,deparse.level = 2,useNA = "always")
 table_data$FISCEDcat <- ifelse(table_data$FISCED<3,"Low",
                                ifelse(table_data$FISCED==3|table_data$FISCED==4,"Middle",
@@ -228,7 +206,7 @@ t
 plot_data <- imp[[1]]
 hist(plot_data$Ginicoef,100)
 hist(plot_data$COMPETE_mean,100)
-corr.test(subset(plot_data,select=c(Ginicoef,COMPETE_mean,PERCOMP_mean))) #r=0.35, 0.25 respectively/ bw competitiveness r=0.58
+corr.test(subset(plot_data,select=c(Ginicoef,COMPETE_mean))) #r=0.35
 plot_data <- plot_data[!duplicated(plot_data$countrycode),]
 png("Plot_competeGini.png", width = 14, height = 21, units = "cm", res = 600)
 plot_data %>%
@@ -289,12 +267,6 @@ imp %>% complete(action="long",include=T) %>% filter(regioncodeModi=="Asia+Ocean
 
 #3.3.2 competitiveness and well-being effect modification by country inequality (Gini index) (S.Table.1)
 imp_long <- complete(imp, action = "long", include = T)
-imp_long$Ginicat <- ifelse(imp_long$Ginicoef < quantile(imp_long$Ginicoef,probs=0.2),1,
-                           ifelse(imp_long$Ginicoef>=quantile(imp_long$Ginicoef,probs=0.2)&imp_long$Ginicoef<quantile(imp_long$Ginicoef,probs=0.4),2,
-                                  ifelse(imp_long$Ginicoef>=quantile(imp_long$Ginicoef,probs=0.4)&imp_long$Ginicoef<quantile(imp_long$Ginicoef,probs=0.6),3,
-                                         ifelse(imp_long$Ginicoef>=quantile(imp_long$Ginicoef,probs=0.6)&imp_long$Ginicoef<quantile(imp_long$Ginicoef,probs=0.8),4,
-                                                ifelse(imp_long$Ginicoef>=quantile(imp_long$Ginicoef,probs=0.8),5,NA)))))
-table(imp_long$Ginicat,imp_long$Ginicoef,deparse.level = 2,useNA = "always")
 imp_long$Ginicat2 <- ifelse(imp_long$Ginicoef < quantile(imp_long$Ginicoef,probs=0.2),1,
                             ifelse(imp_long$Ginicoef>=quantile(imp_long$Ginicoef,probs=0.2)&imp_long$Ginicoef<quantile(imp_long$Ginicoef,probs=0.8),2,
                                    ifelse(imp_long$Ginicoef>=quantile(imp_long$Ginicoef,probs=0.8),3,NA)))
@@ -304,9 +276,6 @@ imp_new <- as.mids(imp_long)
 
 imp %>% with(lmer(scale(ST016Q01NA)~scale(COMPETE_cent)*scale(Ginicoef)+scale(COMPETE_mean)+AGE+ST004D01T+ESCS+IMMIG+(1|countrycode),REML = T,weights = W_FSTUWT)) %>% pool() %>% tidy_parameters()
 imp %>% with(lmer(scale(EUDMO)~scale(COMPETE_cent)*scale(Ginicoef)+scale(COMPETE_mean)+AGE+ST004D01T+ESCS+IMMIG+(1|countrycode),REML = T,weights = W_FSTUWT)) %>% pool() %>% tidy_parameters()
-
-imp_new %>% with(lmer(scale(ST016Q01NA)~scale(COMPETE_cent)*as.factor(Ginicat)+scale(COMPETE_mean)+AGE+ST004D01T+ESCS+IMMIG+(1|countrycode),REML = T,weights = W_FSTUWT)) %>% pool() %>% tidy_parameters()
-imp_new %>% with(lmer(scale(EUDMO)~scale(COMPETE_cent)*as.factor(Ginicat)+scale(COMPETE_mean)+AGE+ST004D01T+ESCS+IMMIG+(1|countrycode),REML = T,weights = W_FSTUWT)) %>% pool() %>% tidy_parameters()
 
 imp_new %>% with(lmer(scale(ST016Q01NA)~scale(COMPETE_cent)*as.factor(Ginicat2)+scale(COMPETE_mean)+AGE+ST004D01T+ESCS+IMMIG+(1|countrycode),REML = T,weights = W_FSTUWT)) %>% pool() %>% tidy_parameters()
 imp_new %>% with(lmer(scale(EUDMO)~scale(COMPETE_cent)*as.factor(Ginicat2)+scale(COMPETE_mean)+AGE+ST004D01T+ESCS+IMMIG+(1|countrycode),REML = T,weights = W_FSTUWT)) %>% pool() %>% tidy_parameters()
@@ -384,7 +353,7 @@ imp %>% complete(action="long",include=T) %>% filter(ST004D01T==2) %>% as.mids()
 # we exlcluded those without data on competitiveness, well-being, Gini-coefficient
 # To use intact data (no filtering, no selecting)
 all_data <- subset(PISA_count, select = c(CNTSTUID,AGE,ST004D01T,ESCS,PA042Q01TA,MISCED,FISCED,BMMJ1,BFMJ2, #age,sex,SES,income,m_edu,f_edu,m_occu,f_occu
-                                                    IMMIG,countrycode,regioncodeModi,FeelNega,COMPETE,PERCOMP,EUDMO,ST016Q01NA,Ginicoef))
+                                          IMMIG,countrycode,regioncodeModi,COMPETE,PERCOMP,EUDMO,ST016Q01NA,Ginicoef))
 include_data <- all_data %>% subset(!is.na(COMPETE)&!is.na(PERCOMP)&!is.na(EUDMO)&!is.na(ST016Q01NA)&!is.na(Ginicoef)) #n=408235
 all_data$included <- ifelse(c(all_data$CNTSTUID)%in%c(include_data$CNTSTUID),"included","excluded")
 table(all_data$included,useNA = "always")
@@ -398,7 +367,7 @@ fisher.test.simulate.p.values <- function(data, variable, by, ...) {
 table_data <- 
   tbl_summary(
     all_data[,c("AGE","ST004D01T","ESCS","PA042Q01TA","MISCED","FISCED","BMMJ1","BFMJ2", 
-                "IMMIG","countrycode","regioncodeModi","FeelNega","included")],
+                "IMMIG","countrycode","regioncodeModi","included")],
     by = included, # split table by group
     missing = "ifany", # don't list missing data separately
     statistic = list(all_continuous() ~ "{mean} ({sd})",
@@ -413,6 +382,3 @@ table_data <-
   modify_header(label = "**Variable**") %>% # update the column header
   bold_labels() 
 table_data
-
-
-
